@@ -55,6 +55,15 @@ export function useUrlState() {
   const setSearch    = useCallback((s)  => setUrlState({ search: s || null, page: 1 }), [setUrlState]);
   const setCategory  = useCallback((c)  => setUrlState({ category: c || null, page: 1 }), [setUrlState]);
   const setSort      = useCallback((field, order) => setUrlState({ sortBy: field || null, sortOrder: order, page: 1 }), [setUrlState]);
+  const resetFilters = useCallback(() => {
+    setUrlState({
+      search: null,
+      category: null,
+      sortBy: null,
+      sortOrder: 'asc',
+      page: 1,
+    });
+  }, [setUrlState]);
 
-  return { page, limit, search, category, sortBy, sortOrder, setPage, setLimit, setSearch, setCategory, setSort };
+  return { page, limit, search, category, sortBy, sortOrder, setPage, setLimit, setSearch, setCategory, setSort, resetFilters };
 }

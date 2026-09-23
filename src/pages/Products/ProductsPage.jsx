@@ -30,6 +30,7 @@ export default function ProductsPage() {
     setSearch,
     setCategory,
     setSort,
+    resetFilters,
   } = useUrlState();
 
   const [viewMode, setViewMode] = useState(() => {
@@ -85,9 +86,7 @@ export default function ProductsPage() {
   const visibleProducts = products.filter((p) => !deletedIds.has(p.id));
 
   const handleResetFilters = () => {
-    setSearch('');
-    setCategory('');
-    setSort('', 'asc');
+    resetFilters();
   };
 
   return (

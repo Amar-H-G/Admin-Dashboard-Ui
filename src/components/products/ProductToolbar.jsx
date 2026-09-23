@@ -1,6 +1,4 @@
-// src/components/products/ProductToolbar.jsx
-import { useState, useEffect } from 'react';
-import { useDebounce } from '../../hooks/useDebounce';
+import { useState, useEffect, useRef } from 'react';
 import Select from '../common/Select';
 import Button from '../common/Button';
 import { SORT_FIELD_OPTIONS } from '../../constants';
@@ -19,24 +17,54 @@ export default function ProductToolbar({
   onViewModeChange,
   onResetFilters,
 }) {
-  const [searchInput, setSearchInput] = useState(search);
-  const debouncedSearch = useDebounce(searchInput, 400);
+  const [searchInput, setSearchInput] = useState(search || '');
+  const debounceTimerRef = useRef(null);
 
-  // Sync internal search input when URL search param changes externally
-  // (e.g. browser back/forward, or reset from parent)
+  // Sync internal search input when URL search changes externally (e.g. Back/Forward, Reset)
   useEffect(() => {
-    setSearchInput(search);
+    setSearchInput(search || '');
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
   }, [search]);
 
-  // Propagate debounced value to URL — but ONLY when it actually differs
-  // from the already-committed URL param. This prevents the debounce from
-  // re-firing an old value after the chip × already cleared the URL.
+  // Clean up debounce timer on unmount
   useEffect(() => {
-    if (debouncedSearch !== search) {
-      onSearchChange(debouncedSearch);
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleSearchInputChange = (e) => {
+    const val = e.target.value;
+    setSearchInput(val);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch]); // intentionally omit `search` & `onSearchChange` — we only want to run when the debounced value settles
+    debounceTimerRef.current = setTimeout(() => {
+      onSearchChange(val.trim());
+    }, 400);
+  };
+
+  const handleClearSearch = () => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    setSearchInput('');
+    onSearchChange('');
+  };
+
+  const handleClearAll = () => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    setSearchInput('');
+    if (onResetFilters) {
+      onResetFilters();
+    }
+  };
 
   // Format category options safely for strings or objects
   const categoryOptions = [
@@ -65,13 +93,13 @@ export default function ProductToolbar({
             type="text"
             placeholder="Search products by title or description..."
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={handleSearchInputChange}
             className="w-full pl-10 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
           />
           {searchInput && (
             <button
               type="button"
-              onClick={() => setSearchInput('')}
+              onClick={handleClearSearch}
               className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
               aria-label="Clear search"
             >
@@ -175,7 +203,7 @@ export default function ProductToolbar({
               Query: &ldquo;{search}&rdquo;
               <button
                 type="button"
-                onClick={() => setSearchInput('')}
+                onClick={handleClearSearch}
                 className="hover:text-blue-900 cursor-pointer"
                 aria-label="Remove search filter"
               >
@@ -209,7 +237,7 @@ export default function ProductToolbar({
           )}
           <button
             type="button"
-            onClick={onResetFilters}
+            onClick={handleClearAll}
             className="text-slate-500 hover:text-red-600 font-medium underline ml-auto cursor-pointer"
           >
             Clear all filters
