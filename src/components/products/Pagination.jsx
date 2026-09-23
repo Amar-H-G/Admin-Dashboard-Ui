@@ -6,8 +6,9 @@ import { PAGE_SIZE_OPTIONS } from '../../constants';
 
 export default function Pagination({ page, limit, total, onPageChange, onLimitChange }) {
   const totalPages  = Math.max(1, Math.ceil(total / limit));
-  const start       = total === 0 ? 0 : (page - 1) * limit + 1;
-  const end         = Math.min(page * limit, total);
+  const validPage   = Math.min(Math.max(1, page), totalPages);
+  const start       = total === 0 ? 0 : Math.min((validPage - 1) * limit + 1, total);
+  const end         = Math.min(validPage * limit, total);
 
   const isFirst = page <= 1;
   const isLast  = page >= totalPages;

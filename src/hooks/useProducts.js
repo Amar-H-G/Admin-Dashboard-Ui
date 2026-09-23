@@ -65,6 +65,8 @@ export function useProducts({ page, limit, search, category, sortBy, sortOrder }
         // Apply client-side sort
         filtered = clientSort(filtered, sortBy, sortOrder);
 
+        if (abortRef.current !== controller) return;
+
         // Manual pagination on the filtered result
         const paginatedSlice = filtered.slice(skip, skip + limit);
         setProducts(paginatedSlice);
@@ -79,6 +81,8 @@ export function useProducts({ page, limit, search, category, sortBy, sortOrder }
           signal: controller.signal,
         });
 
+        if (abortRef.current !== controller) return;
+
         let sorted = clientSort(data.products, sortBy, sortOrder);
         const paginatedSlice = sorted.slice(skip, skip + limit);
         setProducts(paginatedSlice);
@@ -87,16 +91,26 @@ export function useProducts({ page, limit, search, category, sortBy, sortOrder }
       } else {
         // Default — all products, paginated server-side
         data = await fetchProducts({ limit, skip, signal: controller.signal });
+
+        if (abortRef.current !== controller) return;
+
         const sorted = clientSort(data.products, sortBy, sortOrder);
         setProducts(sorted);
         setTotal(data.total);
       }
     } catch (err) {
-      if (err.name === 'AbortError' || err.name === 'CanceledError' || err.message === 'canceled') {
+      if (
+        err?.name === 'AbortError' ||
+        err?.name === 'CanceledError' ||
+        err?.code === 'ERR_CANCELED' ||
+        err?.message === 'canceled'
+      ) {
         // Stale request was cancelled — do not update state
         return;
       }
-      setError(err.message || 'Failed to load products.');
+      if (abortRef.current === controller) {
+        setError(err.message || 'Failed to load products.');
+      }
     } finally {
       // Only clear loading if this controller is still the latest
       if (abortRef.current === controller) {

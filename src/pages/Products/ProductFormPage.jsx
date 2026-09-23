@@ -90,6 +90,7 @@ export default function ProductFormPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     // Mark all touched
     const allTouched = Object.keys(formData).reduce((acc, key) => {
@@ -145,12 +146,15 @@ export default function ProductFormPage() {
 
   if (fetchError) {
     return (
-      <div className="max-w-2xl mx-auto py-8">
+      <div className="max-w-2xl mx-auto py-8 text-center space-y-4">
         <ErrorState
           title="Could not load product"
           message={fetchError}
           onRetry={() => window.location.reload()}
         />
+        <Link to="/products">
+          <Button variant="secondary">Back to Products</Button>
+        </Link>
       </div>
     );
   }

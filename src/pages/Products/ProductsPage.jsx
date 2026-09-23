@@ -68,7 +68,7 @@ export default function ProductsPage() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!productToDelete) return;
+    if (!productToDelete || isDeleting) return;
     setIsDeleting(true);
     try {
       await deleteProduct(productToDelete.id);

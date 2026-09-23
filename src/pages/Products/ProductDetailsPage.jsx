@@ -46,6 +46,7 @@ export default function ProductDetailsPage() {
   }, [loadProduct]);
 
   const handleDelete = async () => {
+    if (isDeleting) return;
     setIsDeleting(true);
     try {
       await deleteProduct(id);
