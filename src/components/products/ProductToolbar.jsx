@@ -22,17 +22,21 @@ export default function ProductToolbar({
   const [searchInput, setSearchInput] = useState(search);
   const debouncedSearch = useDebounce(searchInput, 400);
 
-  // Sync internal search input if external search prop changes (e.g. browser navigation/reset)
+  // Sync internal search input when URL search param changes externally
+  // (e.g. browser back/forward, or reset from parent)
   useEffect(() => {
     setSearchInput(search);
   }, [search]);
 
-  // Notify parent when debounced value changes
+  // Propagate debounced value to URL — but ONLY when it actually differs
+  // from the already-committed URL param. This prevents the debounce from
+  // re-firing an old value after the chip × already cleared the URL.
   useEffect(() => {
     if (debouncedSearch !== search) {
       onSearchChange(debouncedSearch);
     }
-  }, [debouncedSearch, search, onSearchChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]); // intentionally omit `search` & `onSearchChange` — we only want to run when the debounced value settles
 
   // Format category options safely for strings or objects
   const categoryOptions = [
@@ -67,10 +71,7 @@ export default function ProductToolbar({
           {searchInput && (
             <button
               type="button"
-              onClick={() => {
-                setSearchInput('');
-                onSearchChange('');
-              }}
+              onClick={() => setSearchInput('')}
               className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
               aria-label="Clear search"
             >
@@ -171,14 +172,12 @@ export default function ProductToolbar({
           <span className="text-slate-400 font-medium">Active Filters:</span>
           {search && (
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 font-medium border border-blue-100">
-              Query: "{search}"
+              Query: &ldquo;{search}&rdquo;
               <button
                 type="button"
-                onClick={() => {
-                  setSearchInput('');
-                  onSearchChange('');
-                }}
+                onClick={() => setSearchInput('')}
                 className="hover:text-blue-900 cursor-pointer"
+                aria-label="Remove search filter"
               >
                 ×
               </button>
