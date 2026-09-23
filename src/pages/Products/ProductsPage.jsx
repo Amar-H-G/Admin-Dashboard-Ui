@@ -16,8 +16,10 @@ import ProductTableSkeleton from '../../components/skeletons/ProductTableSkeleto
 import EmptyState from '../../components/feedback/EmptyState';
 import ErrorState from '../../components/feedback/ErrorState';
 import Button from '../../components/common/Button';
+import useDocumentTitle from '../../hooks/useDocumentTitle';
 
 export default function ProductsPage() {
+  useDocumentTitle('Products Catalog');
   const {
     page,
     limit,

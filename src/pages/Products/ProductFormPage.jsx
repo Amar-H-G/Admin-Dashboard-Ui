@@ -22,13 +22,12 @@ import Button from '../../components/common/Button';
 import ProductImage from '../../components/common/ProductImage';
 import FormSkeleton from '../../components/skeletons/FormSkeleton';
 import ErrorState from '../../components/feedback/ErrorState';
+import useDocumentTitle from '../../hooks/useDocumentTitle';
 
 export default function ProductFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = Boolean(id);
-
-  const { categories, isLoading: isCategoriesLoading } = useCategories();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -40,6 +39,13 @@ export default function ProductFormPage() {
     description: '',
     thumbnail: '',
   });
+
+  const pageTitle = isEditMode
+    ? (formData.title ? `Edit: ${formData.title}` : 'Edit Product')
+    : 'Add New Product';
+  useDocumentTitle(pageTitle);
+
+  const { categories, isLoading: isCategoriesLoading } = useCategories();
 
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});

@@ -4,10 +4,12 @@ import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { validateLoginForm } from '../../utils/validators';
+import useDocumentTitle from '../../hooks/useDocumentTitle';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 
 export default function LoginPage() {
+  useDocumentTitle('Sign In');
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();

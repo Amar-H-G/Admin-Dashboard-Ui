@@ -1,8 +1,10 @@
 // src/pages/NotFoundPage.jsx
 import { Link } from 'react-router-dom';
 import Button from '../components/common/Button';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 export default function NotFoundPage() {
+  useDocumentTitle('404 Page Not Found');
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center space-y-6 bg-white p-8 rounded-3xl border border-slate-200/80 shadow-xs">

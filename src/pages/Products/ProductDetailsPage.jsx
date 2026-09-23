@@ -17,6 +17,7 @@ import {
   markProductDeleted,
   isCreatedProduct,
 } from '../../utils/localProductStorage';
+import useDocumentTitle from '../../hooks/useDocumentTitle';
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
@@ -25,6 +26,7 @@ export default function ProductDetailsPage() {
   // Explicit lifecycle status: 'loading' | 'success' | 'not-found' | 'error'
   const [status, setStatus] = useState('loading');
   const [product, setProduct] = useState(null);
+  useDocumentTitle(product?.title ? product.title : (status === 'loading' ? 'Loading...' : 'Product Overview'));
   const [selectedImage, setSelectedImage] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
 
