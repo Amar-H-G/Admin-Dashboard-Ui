@@ -14,27 +14,64 @@ export default function ProductDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  // Explicit lifecycle status: 'loading' | 'success' | 'not-found' | 'error'
+  const [status, setStatus] = useState('loading');
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   // Deletion modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const loadProduct = useCallback(async (signal) => {
-    setIsLoading(true);
-    setError(null);
+    // Validate ID: must be a positive integer
+    const numericId = Number(id);
+    if (!id || isNaN(numericId) || numericId <= 0 || !Number.isInteger(numericId)) {
+      setStatus('not-found');
+      setErrorMessage('The requested product could not be found.');
+      setProduct(null);
+      return;
+    }
+
+    setStatus('loading');
+    setProduct(null);
+    setErrorMessage(null);
+
     try {
       const data = await fetchProductById(id, { signal });
-      setProduct(data);
-      setSelectedImage(data.thumbnail || data.images?.[0] || null);
+      if (signal?.aborted) return;
+
+      if (!data || !data.id) {
+        setStatus('not-found');
+        setErrorMessage('The requested product could not be found.');
+      } else {
+        setProduct(data);
+        setSelectedImage(data.thumbnail || data.images?.[0] || null);
+        setStatus('success');
+      }
     } catch (err) {
-      if (err.name === 'AbortError' || err.message === 'canceled') return;
-      setError(err.message || 'Failed to load product details.');
-    } finally {
-      setIsLoading(false);
+      if (
+        signal?.aborted ||
+        err.name === 'AbortError' ||
+        err.name === 'CanceledError' ||
+        err.code === 'ERR_CANCELED' ||
+        err.message === 'canceled'
+      ) {
+        // Aborted request (route transition or React StrictMode cleanup) — do not update state
+        return;
+      }
+
+      if (
+        err.status === 404 ||
+        err.message?.toLowerCase().includes('not found')
+      ) {
+        setStatus('not-found');
+        setErrorMessage(err.message || 'The requested product could not be found.');
+      } else {
+        setStatus('error');
+        setErrorMessage(err.message || 'Failed to load product details.');
+      }
     }
   }, [id]);
 
@@ -59,16 +96,18 @@ export default function ProductDetailsPage() {
     }
   };
 
-  if (isLoading) {
+  // 1. Initial / In-flight loading -> Show skeleton
+  if (status === 'loading') {
     return <ProductDetailsSkeleton />;
   }
 
-  if (error || !product) {
+  // 2. Confirmed Not Found (e.g. 404 or invalid ID) -> Show Not Found UI
+  if (status === 'not-found') {
     return (
       <div className="py-8">
         <ErrorState
           title="Product not found"
-          message={error || 'The requested product could not be found.'}
+          message={errorMessage || 'The requested product could not be found.'}
           onRetry={() => loadProduct()}
         />
         <div className="mt-4 text-center">
@@ -78,6 +117,29 @@ export default function ProductDetailsPage() {
         </div>
       </div>
     );
+  }
+
+  // 3. Network or Server Error -> Show Error UI with Retry
+  if (status === 'error') {
+    return (
+      <div className="py-8">
+        <ErrorState
+          title="Failed to load product"
+          message={errorMessage || 'A network error occurred while loading this product. Please check your connection and try again.'}
+          onRetry={() => loadProduct()}
+        />
+        <div className="mt-4 text-center">
+          <Link to="/products">
+            <Button variant="secondary">Back to Products</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // 4. Fallback guard
+  if (!product) {
+    return <ProductDetailsSkeleton />;
   }
 
   const stockInfo = formatStock(product.stock ?? 0);

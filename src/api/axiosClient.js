@@ -34,13 +34,17 @@ axiosClient.interceptors.response.use(
       // Server responded with an error status
       const { status, data } = error.response;
       const message = data?.message || getDefaultMessage(status);
-      return Promise.reject(new Error(message));
+      const customError = new Error(message);
+      customError.status = status;
+      return Promise.reject(customError);
     } else if (error.request) {
       // No response received
       if (axios.isCancel(error)) {
         return Promise.reject(error); // propagate cancellation as-is
       }
-      return Promise.reject(new Error('Network error. Please check your connection.'));
+      const networkError = new Error('Network error. Please check your connection.');
+      networkError.isNetworkError = true;
+      return Promise.reject(networkError);
     }
     return Promise.reject(new Error(error.message || 'An unexpected error occurred.'));
   }

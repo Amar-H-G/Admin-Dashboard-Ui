@@ -147,6 +147,8 @@
 | Missing duplicate delete guard | Low | Multiple rapid clicks on Delete button could trigger concurrent DELETE requests | Added `if (isDeleting) return;` | **PASS** |
 | Error dead-end on invalid product edit | Low | `ProductFormPage` did not provide navigation button when product fetch failed | Added "Back to Products" button under ErrorState | **PASS** |
 | Unused imports causing linter warnings | Low | `Button` in `Modal.jsx`, `useEffect` in `AuthContext.jsx` | Cleaned unused imports and used lazy state initialization | **PASS** |
+| Search filter cross (×) & Clear All race condition | Medium | Clicking `×` on search chip/input called `onSearchChange('')` while pending debounce timer re-fired stale query; Clear All made 3 separate unbatched URL calls | Refactored `ProductToolbar` with `useRef` timer for instant cancel & clear; added atomic `resetFilters` to `useUrlState`; made `EmptyState` render `action` element | **PASS** |
+| False "Product not found" flash before product details load | High | AbortController on initial StrictMode/fast mount ran `finally { setIsLoading(false) }`, causing `if (!product)` to immediately render "Product not found" while active request was still in flight | Implemented explicit 4-state lifecycle (`loading`, `success`, `not-found`, `error`); guarded `signal?.aborted` from modifying state; attached HTTP status to errors to separate 404 from network failure; validated ID format | **PASS** |
 
 ---
 
