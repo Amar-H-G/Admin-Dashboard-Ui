@@ -134,11 +134,31 @@ DummyJSON's API does not support combined server-side search and category filter
 - When only category is selected, it uses `/products/category/{category}`.
 - When neither is selected, it paginates standard catalog data via `/products?limit={limit}&skip={skip}`.
 
-### 4. DummyJSON CRUD Limitations & Local Persistence Strategy
-DummyJSON is a mock backend that returns mock responses for `POST`, `PUT`, and `DELETE` without permanently mutating its remote database.
-- **Add Product**: Posts payload to `/products/add`, receives created mock product with ID, displays success toast, and navigates to the catalogue.
-- **Edit Product**: Puts updated payload to `/products/{id}`, receives updated mock object, shows success toast, and updates view.
-- **Delete Product**: Calls `DELETE /products/{id}`. The deleted product ID is tracked in optimistic component state (`deletedIds` set) so it immediately vanishes from the user's dashboard view.
+## DummyJSON Mutation Persistence
+
+DummyJSON is a mock testing backend whose mutation endpoints (`POST /products/add`, `PUT /products/:id`, `DELETE /products/:id`) simulate successful responses but **do not permanently persist changes in their remote database**.
+
+To deliver a true production-grade administrative user experience, AdminCore implements a robust, client-side temporary persistence layer (`src/utils/localProductStorage.js`):
+
+- **Real API Calls First**: The application **always** makes real HTTP requests (`POST`, `PUT`, `DELETE`) via Axios to DummyJSON. Real responses and real server errors (400, 404, 500, network timeouts) are handled as normal.
+- **Client-Side Persistence on Success**: Upon confirmed API success:
+  - **Created Products**: Saved to `localStorage` under `admincore_created_products_v1` with full metadata (ID, title, price, category, stock, images, ratings).
+  - **Updated Products**: Overrides saved under `admincore_updated_products_v1` keyed by product ID.
+  - **Deleted Products**: Marked in `admincore_deleted_product_ids_v1`.
+- **Intelligent Data Merging**: Server products and local mutations are merged seamlessly:
+  - `DISPLAYED = (SERVER + LOCAL_CREATED) - LOCAL_DELETED` (with `LOCAL_UPDATED` overriding server fields).
+- **Search, Category & Sorting Integration**:
+  - Locally created and updated products actively participate in search queries (matching title, description, brand, or category).
+  - Selecting categories filters local created/updated items alongside server items.
+  - Sorting (by Title, Price, Rating, or Stock) operates across the unified merged catalog.
+- **Survives Refresh**:
+  - Created products remain in the catalog and details view after browser reload.
+  - Edited product changes remain visible in the table, card view, and details page after reload.
+  - Deleted products stay hidden after reload.
+- **Safety & Reset**:
+  - Corrupted `localStorage` entries are safely recovered with fallback defaults.
+  - Clearing browser `localStorage` resets the application back to the vanilla DummyJSON server dataset.
+  - *Note: Product mutations are intentionally retained across user logout for demo review convenience.*
 
 ### 5. Skeleton Loading Strategy
 Rather than using a single full-page spinner, high-fidelity skeletons mimic the exact layout:

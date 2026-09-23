@@ -168,3 +168,74 @@ test('Pagination bounds calculation logic', async (t) => {
     assert.equal(res.end, 10);
   });
 });
+
+test('localProductStorage unit tests', async (t) => {
+  // Set up mock localStorage for Node.js test environment
+  let store = {};
+  globalThis.localStorage = {
+    getItem: (key) => store[key] || null,
+    setItem: (key, val) => { store[key] = String(val); },
+    removeItem: (key) => { delete store[key]; },
+    clear: () => { store = {}; },
+  };
+
+  const {
+    saveCreatedProduct,
+    getCreatedProducts,
+    saveUpdatedProduct,
+    getUpdatedProducts,
+    markProductDeleted,
+    isProductDeleted,
+    mergeProductsWithLocalMutations,
+    clearLocalProductData,
+  } = await import('../utils/localProductStorage.js');
+
+  t.beforeEach(() => {
+    clearLocalProductData();
+  });
+
+  await t.test('saves and retrieves created products', () => {
+    const product = { id: 201, title: 'Amar Phone', price: 999, category: 'smartphones' };
+    saveCreatedProduct(product);
+    const created = getCreatedProducts();
+    assert.equal(created.length, 1);
+    assert.equal(created[0].id, 201);
+    assert.equal(created[0].title, 'Amar Phone');
+  });
+
+  await t.test('saves and applies updated product overrides', () => {
+    saveUpdatedProduct({ id: 5, price: 150 });
+    const updated = getUpdatedProducts();
+    assert.equal(updated['5'].price, 150);
+
+    const serverProducts = [{ id: 5, title: 'Item 5', price: 100 }];
+    const merged = mergeProductsWithLocalMutations(serverProducts);
+    assert.equal(merged[0].price, 150);
+  });
+
+  await t.test('marks product as deleted and filters it out from merged list', () => {
+    markProductDeleted(10);
+    assert.equal(isProductDeleted(10), true);
+    assert.equal(isProductDeleted(11), false);
+
+    const serverProducts = [{ id: 9, title: 'Item 9' }, { id: 10, title: 'Item 10' }, { id: 11, title: 'Item 11' }];
+    const merged = mergeProductsWithLocalMutations(serverProducts);
+    assert.equal(merged.length, 2);
+    assert.equal(merged.find((p) => p.id === 10), undefined);
+  });
+
+  await t.test('merges created products at the front of server products', () => {
+    saveCreatedProduct({ id: 300, title: 'New Item 300' });
+    const serverProducts = [{ id: 1, title: 'Item 1' }, { id: 2, title: 'Item 2' }];
+    const merged = mergeProductsWithLocalMutations(serverProducts);
+    assert.equal(merged.length, 3);
+    assert.equal(merged[0].id, 300);
+    assert.equal(merged[1].id, 1);
+  });
+
+  await t.test('safely handles corrupted localStorage content without crashing', () => {
+    store['admincore_created_products_v1'] = 'INVALID_JSON{{{';
+    const created = getCreatedProducts();
+    assert.deepEqual(created, []);
+  });
+});

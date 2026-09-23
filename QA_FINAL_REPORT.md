@@ -152,7 +152,17 @@
 
 ---
 
-### 11. Final Submission Checklist
+### 11. Local Mutation Persistence Tests
+
+| Operation | API Request | UI Updated | Refresh Persists | Search | Filter | Details | Result |
+|---|---|---|---|---|---|---|---|
+| **Add** | **PASS** (POST `/products/add` 201) | **PASS** (prepends to list) | **PASS** (saved in `localStorage`) | **PASS** (found by title/desc/brand) | **PASS** (matched by category) | **PASS** (viewable at `/products/:id`) | **PASS** |
+| **Edit** | **PASS** (PUT `/products/:id` 200) | **PASS** (values updated immediately) | **PASS** (overrides server values) | **PASS** (reflects updated title/category) | **PASS** (moves to updated category) | **PASS** (details show updated fields) | **PASS** |
+| **Delete** | **PASS** (DELETE `/products/:id` 200) | **PASS** (vanishes from table/cards) | **PASS** (persists in deleted IDs) | **PASS** (excluded from search results) | **PASS** (excluded from category results) | **N/A** (routes to deleted/not-found) | **PASS** |
+
+---
+
+### 12. Final Submission Checklist
 
 - [x] React + Vite
 - [x] JavaScript / JSX
@@ -182,7 +192,7 @@
 
 ---
 
-### 12. Final Verdict
+### 13. Final Verdict
 
 ## SUBMISSION READY
 The application fulfills all core assignment specifications, handles edge cases gracefully, includes automated unit tests, builds cleanly in production, and is thoroughly documented.

@@ -1,4 +1,3 @@
-// src/pages/Products/ProductsPage.jsx
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -6,6 +5,7 @@ import { useUrlState } from '../../hooks/useUrlState';
 import { useProducts } from '../../hooks/useProducts';
 import { useCategories } from '../../hooks/useCategories';
 import { deleteProduct } from '../../api/productApi';
+import { markProductDeleted } from '../../utils/localProductStorage';
 
 import ProductToolbar from '../../components/products/ProductToolbar';
 import ProductTable from '../../components/products/ProductTable';
@@ -73,9 +73,11 @@ export default function ProductsPage() {
     setIsDeleting(true);
     try {
       await deleteProduct(productToDelete.id);
+      markProductDeleted(productToDelete.id);
       setDeletedIds((prev) => new Set(prev).add(productToDelete.id));
       toast.success(`"${productToDelete.title}" deleted successfully`);
       setProductToDelete(null);
+      refetch();
     } catch (err) {
       toast.error(err.message || 'Failed to delete product.');
     } finally {

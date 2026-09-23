@@ -6,6 +6,13 @@ import { fetchProductById, addProduct, updateProduct } from '../../api/productAp
 import { useCategories } from '../../hooks/useCategories';
 import { validateProductForm } from '../../utils/validators';
 import { slugToLabel } from '../../utils/formatters';
+import {
+  saveCreatedProduct,
+  saveUpdatedProduct,
+  getLocalProduct,
+  applyLocalOverridesToProduct,
+  isProductDeleted,
+} from '../../utils/localProductStorage';
 
 import Input from '../../components/common/Input';
 import Select from '../../components/common/Select';
@@ -42,21 +49,49 @@ export default function ProductFormPage() {
   useEffect(() => {
     if (!isEditMode) return;
 
+    if (isProductDeleted(id)) {
+      setFetchError('This product has been deleted.');
+      setIsFetching(false);
+      return;
+    }
+
+    // Check if product exists in local storage (created or updated)
+    const local = getLocalProduct(id);
+    if (local) {
+      setFormData({
+        title: local.title || '',
+        category: local.category || '',
+        price: local.price !== undefined ? String(local.price) : '',
+        stock: local.stock !== undefined ? String(local.stock) : '',
+        brand: local.brand || '',
+        rating: local.rating !== undefined ? String(local.rating) : '',
+        description: local.description || '',
+        thumbnail: local.thumbnail || local.images?.[0] || '',
+      });
+      setIsFetching(false);
+      return;
+    }
+
     const controller = new AbortController();
     setIsFetching(true);
     setFetchError(null);
 
     fetchProductById(id, { signal: controller.signal })
       .then((data) => {
+        const product = applyLocalOverridesToProduct(data);
+        if (!product) {
+          setFetchError('Product not found.');
+          return;
+        }
         setFormData({
-          title: data.title || '',
-          category: data.category || '',
-          price: data.price !== undefined ? String(data.price) : '',
-          stock: data.stock !== undefined ? String(data.stock) : '',
-          brand: data.brand || '',
-          rating: data.rating !== undefined ? String(data.rating) : '',
-          description: data.description || '',
-          thumbnail: data.thumbnail || data.images?.[0] || '',
+          title: product.title || '',
+          category: product.category || '',
+          price: product.price !== undefined ? String(product.price) : '',
+          stock: product.stock !== undefined ? String(product.stock) : '',
+          brand: product.brand || '',
+          rating: product.rating !== undefined ? String(product.rating) : '',
+          description: product.description || '',
+          thumbnail: product.thumbnail || product.images?.[0] || '',
         });
       })
       .catch((err) => {
@@ -121,12 +156,23 @@ export default function ProductFormPage() {
 
     try {
       if (isEditMode) {
-        await updateProduct(id, payload);
+        const updatedResponse = await updateProduct(id, payload);
+        saveUpdatedProduct({
+          id,
+          ...payload,
+          ...(updatedResponse || {}),
+        });
         toast.success(`Product "${payload.title}" updated successfully!`);
         navigate(`/products/${id}`);
       } else {
-        const created = await addProduct(payload);
-        toast.success(`Product "${created.title || payload.title}" added successfully!`);
+        const createdResponse = await addProduct(payload);
+        const createdProduct = {
+          ...payload,
+          ...(createdResponse || {}),
+          id: createdResponse?.id || Date.now(),
+        };
+        saveCreatedProduct(createdProduct);
+        toast.success(`Product "${createdProduct.title}" added successfully!`);
         navigate('/products');
       }
     } catch (err) {

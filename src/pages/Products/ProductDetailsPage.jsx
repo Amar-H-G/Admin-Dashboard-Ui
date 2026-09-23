@@ -9,6 +9,12 @@ import Button from '../../components/common/Button';
 import StarRating from '../../components/common/StarRating';
 import DeleteConfirmModal from '../../components/products/DeleteConfirmModal';
 import { formatCurrency, formatStock, slugToLabel } from '../../utils/formatters';
+import {
+  getLocalProduct,
+  applyLocalOverridesToProduct,
+  isProductDeleted,
+  markProductDeleted,
+} from '../../utils/localProductStorage';
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
@@ -25,12 +31,29 @@ export default function ProductDetailsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const loadProduct = useCallback(async (signal) => {
-    // Validate ID: must be a positive integer
+    // 1. Check if explicitly deleted
+    if (isProductDeleted(id)) {
+      setStatus('not-found');
+      setErrorMessage('This product has been deleted.');
+      setProduct(null);
+      return;
+    }
+
+    // 2. Validate ID format: positive integer
     const numericId = Number(id);
     if (!id || isNaN(numericId) || numericId <= 0 || !Number.isInteger(numericId)) {
       setStatus('not-found');
       setErrorMessage('The requested product could not be found.');
       setProduct(null);
+      return;
+    }
+
+    // 3. Check if available in local storage (created or updated)
+    const local = getLocalProduct(id);
+    if (local) {
+      setProduct(local);
+      setSelectedImage(local.thumbnail || local.images?.[0] || null);
+      setStatus('success');
       return;
     }
 
@@ -42,12 +65,14 @@ export default function ProductDetailsPage() {
       const data = await fetchProductById(id, { signal });
       if (signal?.aborted) return;
 
-      if (!data || !data.id) {
+      const finalProduct = applyLocalOverridesToProduct(data);
+
+      if (!finalProduct || !finalProduct.id) {
         setStatus('not-found');
         setErrorMessage('The requested product could not be found.');
       } else {
-        setProduct(data);
-        setSelectedImage(data.thumbnail || data.images?.[0] || null);
+        setProduct(finalProduct);
+        setSelectedImage(finalProduct.thumbnail || finalProduct.images?.[0] || null);
         setStatus('success');
       }
     } catch (err) {
@@ -86,6 +111,7 @@ export default function ProductDetailsPage() {
     setIsDeleting(true);
     try {
       await deleteProduct(id);
+      markProductDeleted(id);
       toast.success('Product deleted successfully');
       navigate('/products', { replace: true });
     } catch (err) {
