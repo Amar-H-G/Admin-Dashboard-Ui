@@ -201,6 +201,7 @@ test('localProductStorage unit tests', async (t) => {
     assert.equal(created.length, 1);
     assert.equal(created[0].id, 201);
     assert.equal(created[0].title, 'Amar Phone');
+    assert.equal(created[0].thumbnail, '');
   });
 
   await t.test('saves and applies updated product overrides', () => {
