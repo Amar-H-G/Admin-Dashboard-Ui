@@ -1,5 +1,4 @@
-// src/pages/Products/ProductDetailsPage.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { fetchProductById, deleteProduct } from '../../api/productApi';
