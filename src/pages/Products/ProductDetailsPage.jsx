@@ -14,6 +14,7 @@ import {
   applyLocalOverridesToProduct,
   isProductDeleted,
   markProductDeleted,
+  isCreatedProduct,
 } from '../../utils/localProductStorage';
 
 export default function ProductDetailsPage() {
@@ -110,7 +111,15 @@ export default function ProductDetailsPage() {
     if (isDeleting) return;
     setIsDeleting(true);
     try {
-      await deleteProduct(id);
+      try {
+        await deleteProduct(id);
+      } catch (apiErr) {
+        const isLocal = isCreatedProduct(id);
+        const is404 = apiErr?.status === 404 || apiErr?.message?.toLowerCase().includes('not found');
+        if (!isLocal || !is404) {
+          throw apiErr;
+        }
+      }
       markProductDeleted(id);
       toast.success('Product deleted successfully');
       navigate('/products', { replace: true });

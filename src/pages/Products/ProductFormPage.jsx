@@ -12,6 +12,7 @@ import {
   getLocalProduct,
   applyLocalOverridesToProduct,
   isProductDeleted,
+  isCreatedProduct,
 } from '../../utils/localProductStorage';
 
 import Input from '../../components/common/Input';
@@ -156,7 +157,19 @@ export default function ProductFormPage() {
 
     try {
       if (isEditMode) {
-        const updatedResponse = await updateProduct(id, payload);
+        let updatedResponse = null;
+        try {
+          updatedResponse = await updateProduct(id, payload);
+        } catch (apiErr) {
+          // If the product was locally created (e.g. ID >= 195), DummyJSON doesn't have it on the server
+          // and returns a 404. We catch this expected 404 and allow the local update to proceed.
+          const isLocal = isCreatedProduct(id);
+          const is404 = apiErr?.status === 404 || apiErr?.message?.toLowerCase().includes('not found');
+          if (!isLocal || !is404) {
+            throw apiErr;
+          }
+        }
+
         saveUpdatedProduct({
           id,
           ...payload,

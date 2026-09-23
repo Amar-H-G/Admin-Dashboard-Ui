@@ -78,6 +78,15 @@ export function saveCreatedProduct(product) {
   return fullProduct;
 }
 
+/**
+ * Checks if a product was created locally.
+ */
+export function isCreatedProduct(id) {
+  if (id === undefined || id === null) return false;
+  const created = getCreatedProducts();
+  return created.some((p) => String(p.id) === String(id));
+}
+
 // -------------------------------------------------------------
 // 2. Updated Products
 // -------------------------------------------------------------

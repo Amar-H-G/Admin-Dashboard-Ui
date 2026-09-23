@@ -5,7 +5,7 @@ import { useUrlState } from '../../hooks/useUrlState';
 import { useProducts } from '../../hooks/useProducts';
 import { useCategories } from '../../hooks/useCategories';
 import { deleteProduct } from '../../api/productApi';
-import { markProductDeleted } from '../../utils/localProductStorage';
+import { markProductDeleted, isCreatedProduct } from '../../utils/localProductStorage';
 
 import ProductToolbar from '../../components/products/ProductToolbar';
 import ProductTable from '../../components/products/ProductTable';
@@ -72,7 +72,15 @@ export default function ProductsPage() {
     if (!productToDelete || isDeleting) return;
     setIsDeleting(true);
     try {
-      await deleteProduct(productToDelete.id);
+      try {
+        await deleteProduct(productToDelete.id);
+      } catch (apiErr) {
+        const isLocal = isCreatedProduct(productToDelete.id);
+        const is404 = apiErr?.status === 404 || apiErr?.message?.toLowerCase().includes('not found');
+        if (!isLocal || !is404) {
+          throw apiErr;
+        }
+      }
       markProductDeleted(productToDelete.id);
       setDeletedIds((prev) => new Set(prev).add(productToDelete.id));
       toast.success(`"${productToDelete.title}" deleted successfully`);
