@@ -178,14 +178,18 @@ export default function ProductFormPage() {
         toast.success(`Product "${payload.title}" updated successfully!`);
         navigate(`/products/${id}`);
       } else {
-        const createdResponse = await addProduct(payload);
+        let createdResponse = null;
+        try {
+          createdResponse = await addProduct(payload);
+        } catch (apiErr) {
+          console.warn('DummyJSON addProduct network call failed, saving locally:', apiErr);
+        }
         const createdProduct = {
           ...payload,
           ...(createdResponse || {}),
-          id: createdResponse?.id || Date.now(),
         };
-        saveCreatedProduct(createdProduct);
-        toast.success(`Product "${createdProduct.title}" added successfully!`);
+        const saved = saveCreatedProduct(createdProduct);
+        toast.success(`Product "${saved?.title || payload.title}" added successfully!`);
         navigate('/products');
       }
     } catch (err) {

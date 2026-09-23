@@ -58,23 +58,48 @@ export function getCreatedProducts() {
 export function saveCreatedProduct(product) {
   if (!product) return;
   const current = getCreatedProducts();
-  // Ensure numeric/string ID stability
-  const normalizedId = product.id ?? Date.now();
+  const deletedSet = new Set(getDeletedProductIds());
+
+  // Find all used numeric IDs among created products
+  const numericIds = current
+    .map((p) => Number(p.id))
+    .filter((n) => Number.isFinite(n) && n > 0);
+
+  // If a valid ID > 194 was supplied and is not already taken by an existing created product, preserve it
+  let nextId;
+  const suppliedId = Number(product.id);
+  const alreadyTaken = current.some((p) => String(p.id) === String(suppliedId));
+
+  if (Number.isFinite(suppliedId) && suppliedId > 194 && !alreadyTaken) {
+    nextId = suppliedId;
+  } else {
+    nextId = numericIds.length > 0 ? Math.max(194, ...numericIds) + 1 : 195;
+  }
+
+  // Ensure this ID is unblocked from deleted list in case it was previously deleted in testing
+  if (deletedSet.has(String(nextId))) {
+    deletedSet.delete(String(nextId));
+    safeSet(STORAGE_KEYS.DELETED, Array.from(deletedSet));
+  }
+  if (product.id && deletedSet.has(String(product.id))) {
+    deletedSet.delete(String(product.id));
+    safeSet(STORAGE_KEYS.DELETED, Array.from(deletedSet));
+  }
+
   const fullProduct = {
     ...product,
-    id: normalizedId,
-    rating: product.rating ?? 5.0,
+    id: nextId,
+    rating: product.rating !== undefined && product.rating !== '' ? Number(product.rating) : 4.5,
     reviews: product.reviews || [],
     images: product.images && product.images.length > 0
       ? product.images
       : (product.thumbnail ? [product.thumbnail] : []),
     thumbnail: product.thumbnail || product.images?.[0] || 'https://via.placeholder.com/300?text=Product',
-    createdAt: product.createdAt || new Date().toISOString(),
+    createdAt: new Date().toISOString(),
   };
 
-  // Remove duplicate if somehow already exists
-  const filtered = current.filter((p) => String(p.id) !== String(normalizedId));
-  safeSet(STORAGE_KEYS.CREATED, [fullProduct, ...filtered]);
+  // Prepend to created list so the newest product appears at the very top of catalog
+  safeSet(STORAGE_KEYS.CREATED, [fullProduct, ...current]);
   return fullProduct;
 }
 
@@ -83,6 +108,11 @@ export function saveCreatedProduct(product) {
  */
 export function isCreatedProduct(id) {
   if (id === undefined || id === null) return false;
+  const numId = Number(id);
+  // Any product with ID > 194 is locally created (since DummyJSON only has 1..194)
+  if (Number.isFinite(numId) && numId > 194) {
+    return true;
+  }
   const created = getCreatedProducts();
   return created.some((p) => String(p.id) === String(id));
 }
