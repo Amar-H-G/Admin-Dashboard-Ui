@@ -12,8 +12,8 @@ export default function DashboardLayout() {
       {/* Sidebar - fixed on the left */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+      {/* Main Content Area (offset on desktop by fixed sidebar width) */}
+      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden lg:pl-64">
         {/* Header - fixed at the top */}
         <Header onMenuClick={() => setSidebarOpen(true)} />
 
