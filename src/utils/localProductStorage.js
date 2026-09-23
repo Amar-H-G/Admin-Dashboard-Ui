@@ -94,7 +94,7 @@ export function saveCreatedProduct(product) {
     images: product.images && product.images.length > 0
       ? product.images
       : (product.thumbnail ? [product.thumbnail] : []),
-    thumbnail: product.thumbnail || product.images?.[0] || 'https://via.placeholder.com/300?text=Product',
+    thumbnail: product.thumbnail || product.images?.[0] || '',
     createdAt: new Date().toISOString(),
   };
 

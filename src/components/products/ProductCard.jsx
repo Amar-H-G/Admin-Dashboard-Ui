@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Badge from '../common/Badge';
 import Button from '../common/Button';
 import StarRating from '../common/StarRating';
+import ProductImage from '../common/ProductImage';
 import { formatCurrency, formatStock, slugToLabel } from '../../utils/formatters';
 
 export default function ProductCard({ product, onDelete }) {
@@ -12,14 +13,11 @@ export default function ProductCard({ product, onDelete }) {
     <div className="group bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col overflow-hidden hover:-translate-y-0.5">
       {/* Product Image & Badges */}
       <div className="relative aspect-4/3 bg-slate-100 overflow-hidden">
-        <img
-          src={product.thumbnail || product.images?.[0] || 'https://via.placeholder.com/300x200?text=No+Image'}
-          alt={product.title}
+        <ProductImage
+          src={product.thumbnail || product.images?.[0]}
+          title={product.title}
           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
-          loading="lazy"
-          onError={(e) => {
-            e.currentTarget.src = 'https://via.placeholder.com/300x200?text=No+Image';
-          }}
+          textClassName="text-4xl font-extrabold"
         />
         
         {/* Discount badge */}

@@ -19,6 +19,7 @@ import Input from '../../components/common/Input';
 import Select from '../../components/common/Select';
 import Textarea from '../../components/common/Textarea';
 import Button from '../../components/common/Button';
+import ProductImage from '../../components/common/ProductImage';
 import FormSkeleton from '../../components/skeletons/FormSkeleton';
 import ErrorState from '../../components/feedback/ErrorState';
 
@@ -362,24 +363,25 @@ export default function ProductFormPage() {
               helperText="Paste a direct public image link to display product thumbnail."
             />
 
-            {formData.thumbnail && (
-              <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <div className="w-14 h-14 rounded-lg bg-white overflow-hidden border border-slate-200 shrink-0">
-                  <img
-                    src={formData.thumbnail}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = 'https://via.placeholder.com/60?text=Invalid';
-                    }}
-                  />
-                </div>
-                <div className="text-xs text-slate-500">
-                  <span className="font-semibold text-slate-700 block">Image Preview</span>
-                  <span>Will be displayed in product cards and inventory listings</span>
-                </div>
+            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="w-14 h-14 rounded-lg bg-white overflow-hidden border border-slate-200 shrink-0 flex items-center justify-center">
+                <ProductImage
+                  src={formData.thumbnail}
+                  title={formData.title || 'Product'}
+                  textClassName="text-xl font-bold"
+                />
               </div>
-            )}
+              <div className="text-xs text-slate-500">
+                <span className="font-semibold text-slate-700 block">
+                  {formData.thumbnail ? 'Image Preview' : 'Fallback Avatar Preview'}
+                </span>
+                <span>
+                  {formData.thumbnail
+                    ? 'Will be displayed in product cards and inventory listings'
+                    : 'If no image is provided, the first character of the product title is displayed'}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Description */}

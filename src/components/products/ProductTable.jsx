@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Badge from '../common/Badge';
 import Button from '../common/Button';
 import StarRating from '../common/StarRating';
+import ProductImage from '../common/ProductImage';
 import { formatCurrency, formatStock, slugToLabel } from '../../utils/formatters';
 
 export default function ProductTable({
@@ -103,14 +104,10 @@ export default function ProductTable({
                 {/* Thumbnail */}
                 <td className="py-3 px-4">
                   <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
-                    <img
-                      src={product.thumbnail || product.images?.[0] || 'https://via.placeholder.com/60?text=No+Img'}
-                      alt={product.title}
-                      className="w-full h-full object-cover object-center"
-                      loading="lazy"
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://via.placeholder.com/60?text=No+Img';
-                      }}
+                    <ProductImage
+                      src={product.thumbnail || product.images?.[0]}
+                      title={product.title}
+                      textClassName="text-base font-bold"
                     />
                   </div>
                 </td>

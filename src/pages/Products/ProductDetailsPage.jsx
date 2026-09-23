@@ -7,6 +7,7 @@ import ErrorState from '../../components/feedback/ErrorState';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import StarRating from '../../components/common/StarRating';
+import ProductImage from '../../components/common/ProductImage';
 import DeleteConfirmModal from '../../components/products/DeleteConfirmModal';
 import { formatCurrency, formatStock, slugToLabel } from '../../utils/formatters';
 import {
@@ -229,14 +230,12 @@ export default function ProductDetailsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
         {/* Left column: Image gallery */}
         <div className="lg:col-span-6 space-y-4">
-          <div className="aspect-4/3 w-full bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden flex items-center justify-center p-4">
-            <img
-              src={selectedImage || 'https://via.placeholder.com/600x400?text=No+Image'}
-              alt={product.title}
-              className="max-h-full max-w-full object-contain"
-              onError={(e) => {
-                e.currentTarget.src = 'https://via.placeholder.com/600x400?text=No+Image';
-              }}
+          <div className="aspect-4/3 w-full bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden flex items-center justify-center">
+            <ProductImage
+              src={selectedImage}
+              title={product.title}
+              className="max-h-full max-w-full object-contain p-4"
+              textClassName="text-7xl font-black"
             />
           </div>
 
@@ -254,7 +253,7 @@ export default function ProductDetailsPage() {
                       : 'border-slate-200 hover:border-slate-300'
                   }`}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <ProductImage src={img} title={product.title} textClassName="text-sm font-bold" />
                 </button>
               ))}
             </div>
